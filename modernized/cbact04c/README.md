@@ -73,11 +73,15 @@ scenario is the realistic one: it is the same extract after POSTTRAN, built by r
 ## Verification harness (`parity/`)
 
 ```bash
+parity/validate.sh          # everything below + run-sample.sh + mvn test; writes parity/RESULTS.md
 parity/run-parity.sh        # compile COBOL, run COBOL + Java on every scenario, diff, run oracle
 parity/run-parity-live.sh   # same on the REAL clock, timestamp fields masked
 parity/oracle.py            # independent spec model vs saved COBOL baselines (no compiler needed)
+parity/check-quirks.py      # asserts the quirks below hold in the COBOL baselines and Java outputs
 parity/mutation-check.sh    # proves the diff catches rounding instead of truncation
 ```
+
+The latest full run and the pilot recommendation are in [`PILOT-SUMMARY.md`](PILOT-SUMMARY.md).
 
 1. **Legacy run.** `run-parity.sh` compiles the unmodified `CBACT04C.cbl` with GnuCOBOL
    (`cobc -fsign=EBCDIC`). Helpers in `parity/cobol/` load each scenario into indexed files, as the
@@ -85,8 +89,8 @@ parity/mutation-check.sh    # proves the diff catches rounding instead of trunca
    and unload ACCTFILE after the run (`PARUNLD`). The COBOL outputs are saved as
    `scenarios/<name>/expected/`.
 2. **Modernized run.** The Java port runs on the same inputs, and `compare.py` diffs TRANSACT
-   (350-byte records), ACCTFILE, SYSOUT and the return code record by record. The results go to
-   [`parity/RESULTS.md`](parity/RESULTS.md).
+   (350-byte records), ACCTFILE, SYSOUT and the return code record by record. `validate.sh`
+   collects the results of every check into [`parity/RESULTS.md`](parity/RESULTS.md).
 3. **Independent oracle.** `oracle.py` is a ~150-line Python `Decimal` model written only from the
    rules on this page, with no shared code. It rebuilds all four artifacts and diffs them against the
    COBOL baseline and against the Java output. This is the "expected output computed by hand" check:
