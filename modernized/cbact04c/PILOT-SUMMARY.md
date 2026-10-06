@@ -14,7 +14,7 @@ Toolchain used: GnuCOBOL 3.1.2 (BDB indexed files), OpenJDK 17.0.20.1, Maven 3.6
 sudo apt-get install -y gnucobol openjdk-17-jdk maven python3   # skip whatever is already installed
 cd modernized/cbact04c
 mvn package                  # Java port + unit tests
-parity/validate.sh           # the whole validation below, writes parity/RESULTS.md (~1.5 min)
+parity/validate.sh           # the whole validation below, writes parity/RESULTS.md
 ```
 
 `validate.sh` runs, in order:
@@ -88,7 +88,7 @@ are covered by the byte-for-byte SYSOUT and ACCTFILE comparison of the `err-*` s
 
 **The approach is proven for this program and is ready to reuse on the next one.** Three independent
 signals agree (COBOL, Java, oracle), the comparison is shown to be sensitive (every rounding mutant
-fails), and the whole run is one command that finishes in about a minute and a half.
+fails), and the whole run is one command (`parity/validate.sh`).
 
 What carries over to the next program as is: the GnuCOBOL build with `-fsign=EBCDIC`, the `CEE3ABD`
 stub, the PARM driver, the loader/unloader pattern for VSAM files, `compare.py` (frozen and masked
