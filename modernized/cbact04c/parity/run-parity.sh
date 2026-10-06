@@ -4,7 +4,7 @@
 #   2. run it on every scenario; outputs become the baseline in scenarios/<name>/expected/
 #      (these baselines are also checked by the Java unit test GoldenParityTest)
 #   3. build the Java port and run it on the same scenarios (out/java/<name>/)
-#   4. compare record by record and write RESULTS.md
+#   4. compare record by record (report in out/RESULTS-frozen.md; validate.sh turns it into RESULTS.md)
 #   5. check both against the independent spec model (oracle.py)
 # Requires: cobc (GnuCOBOL 3.x with indexed-file support), Java 17, Maven, python3.
 set -euo pipefail
@@ -22,6 +22,6 @@ for scn in scenarios/*/; do
   ln -s "../../$scn/expected" "out/cobol/$name"
   ./run-java.sh "$scn" "out/java/$name"
 done
-./compare.py out/cobol out/java RESULTS.md
+./compare.py out/cobol out/java out/RESULTS-frozen.md
 echo '--- oracle vs COBOL baseline'; ./oracle.py
 echo '--- oracle vs Java'; ./oracle.py --against out/java

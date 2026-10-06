@@ -5,6 +5,7 @@ Usage: compare.py [--mask-timestamps] <cobol-out-root> <java-out-root> [report.m
 Each root holds one directory per scenario with sysout.txt, rc, transact.dat, acctdata.txt.
 --mask-timestamps: for runs on the real clock, TRAN-ORIG-TS/TRAN-PROC-TS (bytes 279-330 of each
 TRANSACT record) are checked to be well-formed DB2 timestamps with ORIG == PROC, then masked.
+The report (if given) holds a per-scenario summary (counts, return codes) and the per-artifact table.
 Exits 1 if any record differs.
 """
 import re
@@ -66,6 +67,8 @@ def main():
     report = Path(args[2]) if len(args) > 2 else None
     out = ["| Scenario | Artifact | COBOL records | Java records | Identical | Different |",
            "|---|---|---:|---:|---:|---:|"]
+    summary = ["| Scenario | TRANSACT records | ACCTFILE records | SYSOUT lines | rc COBOL | rc Java | Result |",
+               "|---|---:|---:|---:|---:|---:|---|"]
     failed = False
     for scn in sorted(p for p in cobol_root.iterdir() if p.is_dir()):
         rows, diffs = compare(scn, java_root / scn.name, mask)
@@ -73,13 +76,18 @@ def main():
             out.append(f"| {scn.name} | {name} | {na} | {nb} | {same} | {bad} |")
             failed |= bad > 0
         status = "MATCH" if not any(r[4] for r in rows) else "DIFF"
+        n = {r[0]: r for r in rows}
+        count = lambda a: str(n[a][1]) if n[a][1] == n[a][2] else f"{n[a][1]} / {n[a][2]}"
+        rc = lambda root: (root / scn.name / "rc").read_text().strip() if root.joinpath(scn.name, "rc").exists() else "?"
+        summary.append(f"| {scn.name} | {count('transact.dat')} | {count('acctdata.txt')} | {count('sysout.txt')} "
+                       f"| {rc(cobol_root)} | {rc(java_root)} | {'identical' if status == 'MATCH' else 'DIFFERENT'} |")
         print(f"{status:5} {scn.name}")
         for d in diffs:
             print(d)
     table = "\n".join(out)
     print(table)
     if report:
-        report.write_text(table + "\n")
+        report.write_text("\n".join(summary) + "\n\n" + table + "\n")
     sys.exit(1 if failed else 0)
 
 
